@@ -64,9 +64,7 @@ describe("Given an LwwElementSet", () => {
     });
 
     test("Then added value should be in removed collection with correct timestamp", () => {
-      expect(set.removed).toIncludeSameMembers([
-        [removedElement, now],
-      ]);
+      expect(set.removed).toIncludeSameMembers([[removedElement, now]]);
     });
   });
 
@@ -74,6 +72,8 @@ describe("Given an LwwElementSet", () => {
     let secondarySet: ISet<number>;
     let primarySet: ISet<number>;
     // TODO: refactor to use default set rather than primarySet
+
+    // maybe use a times array t[]
 
     beforeEach(() => {
       const now = new Date();
@@ -94,26 +94,23 @@ describe("Given an LwwElementSet", () => {
       primarySet = new LwwElementSet(firstSet, []);
       secondarySet = new LwwElementSet(secondSet, []);
 
-      jest.setSystemTime(new Date(1632943954788))
-      primarySet.remove(2)
-      jest.setSystemTime(new Date(1632943954789))
-      secondarySet.remove(5)
-
+      jest.setSystemTime(new Date(1632943954788));
+      primarySet.remove(2);
+      jest.setSystemTime(new Date(1632943954789));
+      secondarySet.remove(5);
     });
 
-    test('And there is a conflict Then the set is biased towards add', () => {
-
-      jest.setSystemTime(new Date(1632943954888))
-      primarySet.add(9)
-      secondarySet.remove(9)
+    test("And there is a conflict Then the set is biased towards delete", () => {
+      jest.setSystemTime(new Date(1632943954888));
+      primarySet.add(9);
+      secondarySet.remove(9);
 
       primarySet.merge(secondarySet);
       secondarySet.merge(primarySet);
 
-      expect(primarySet.listAllElements()).toContain(9)
-      expect(secondarySet.listAllElements()).toContain(9)
-
-    })
+      expect(primarySet.listAllElements()).not.toContain(9);
+      expect(secondarySet.listAllElements()).not.toContain(9);
+    });
 
     test("Then the set contains the correct elements", () => {
       primarySet.merge(secondarySet);
@@ -140,29 +137,19 @@ describe("Given an LwwElementSet", () => {
         [5, new Date(1632943954789)],
       ]);
     });
-  });
 
+    test("And the same entry is contained in both graphs with different times Then the latest should be persisted", () => {
+      const latestTime = 1632943954784;
+      jest.setSystemTime(new Date(latestTime));
+
+      secondarySet.add(2);
+
+      primarySet.merge(secondarySet);
+
+      expect(primarySet.added).toIncludeAllMembers([[2, new Date(latestTime)]]);
+    });
+  });
 });
 
 const moveTimeForwards = (now: Date) =>
   jest.setSystemTime(now.setMinutes(now.getMinutes() + 1));
-
-const addValuesToSet = (values: number[], set: ISet<number>, now: Date) => {
-  for (const value of values) {
-    moveTimeForwards(now);
-
-    set.add(value);
-  }
-};
-
-const removeValuesFromSet = (
-  values: number[],
-  set: ISet<number>,
-  now: Date
-) => {
-  for (const value of values) {
-    moveTimeForwards(now);
-
-    set.remove(value);
-  }
-};

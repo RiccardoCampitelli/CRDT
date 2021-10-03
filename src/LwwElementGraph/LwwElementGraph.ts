@@ -11,10 +11,13 @@ export class LwwElementGraph<TValue> implements IGraph<TValue, ISet<TValue>> {
   }
 
   addEdge(vertexA: TValue, vertexB: TValue): void {
+    if (vertexA === vertexB) {
+      console.log("vertexA must be different from vertexB");
+      return;
+    }
+
     const vertexAExists = this.vertices.contains(vertexA);
     const vertexBExists = this.vertices.contains(vertexB);
-
-    const test = JSON.stringify([vertexA, vertexB]);
 
     const edgeExists =
       this.edges.contains(JSON.stringify([vertexA, vertexB])) ||
@@ -38,12 +41,19 @@ export class LwwElementGraph<TValue> implements IGraph<TValue, ISet<TValue>> {
   }
 
   removeVertex(u: TValue): void {
+    let vertexExistsInEdge = false;
+
     for (const stringifiedValue of this.edges.listAllElements()) {
-      const [vertexA, vertexB] = JSON.parse(stringifiedValue);
+      const [vertexA, vertexB] = JSON.parse(stringifiedValue) as Tuple<TValue>;
 
       if (vertexA === u || vertexB === u) {
-        this.removeEdge(vertexA, vertexB);
+        vertexExistsInEdge = true;
       }
+    }
+
+    if (vertexExistsInEdge) {
+      console.log("Cannot remove vertex because it is contained in edge");
+      return;
     }
 
     this.vertices.remove(u);
@@ -57,7 +67,7 @@ export class LwwElementGraph<TValue> implements IGraph<TValue, ISet<TValue>> {
     const result: TValue[] = [];
 
     for (const stringifiedValue of this.edges.listAllElements()) {
-      const [vertexA, vertexB] = JSON.parse(stringifiedValue);
+      const [vertexA, vertexB] = JSON.parse(stringifiedValue) as Tuple<TValue>;
 
       if (u === vertexA) result.push(vertexB);
 
@@ -70,44 +80,77 @@ export class LwwElementGraph<TValue> implements IGraph<TValue, ISet<TValue>> {
   findPath(from: TValue, to: TValue): TValue[] {
     const visited = new Set<TValue>();
 
-    const path: TValue[] = [];
+    const pathResults: TValue[][] = [];
 
-    this.#pathHelper(from, to, visited, path);
+    this.#pathHelper(from, to, visited, [], pathResults);
 
-    if (path[path.length - 1] !== to) throw new Error("Unable to find path");
+    const successfulPaths = pathResults.filter(
+      (path) => path[path.length - 1] === to
+    );
 
-    return path;
+    let shortestPath = successfulPaths[0];
+
+    for (let i = 0; i < successfulPaths.length; i++) {
+      const currentPath = successfulPaths[i];
+
+      if (currentPath.length < shortestPath.length) {
+        shortestPath = currentPath;
+      }
+    }
+
+    if (shortestPath === undefined) {
+      console.log(`Unable to find path between ${from} and ${to}`);
+    }
+
+    return shortestPath;
   }
 
   #pathHelper(
     currentNode: TValue,
     targetNode: TValue,
     visited: Set<TValue>,
-    path: TValue[]
+    path: TValue[],
+    pathResults: TValue[][]
   ) {
-    if (visited.has(currentNode) === false) {
-      visited.add(currentNode);
-      path.push(currentNode);
-    }
-
     if (visited.has(currentNode)) {
       return;
     }
 
     if (currentNode === targetNode) {
+      path.push(currentNode);
+      pathResults.push([...path]);
       return;
+    }
+
+    if (visited.has(currentNode) === false) {
+      visited.add(currentNode);
+      path.push(currentNode);
     }
 
     const allConnectedNodes = this.queryConnectedVertices(currentNode);
 
     for (const node of allConnectedNodes) {
-      this.#pathHelper(node, targetNode, visited, path);
+      this.#pathHelper(node, targetNode, visited, [...path], pathResults);
     }
   }
 
+  //TODO: test merging
   merge(graph: IGraph<TValue, ISet<TValue>>): void {
+    this.vertices.merge(graph.vertices);
+
     this.edges.merge(graph.edges);
 
-    this.vertices.merge(graph.vertices);
+    const allEdges = this.edges.listAllElements();
+
+    for (const stringifiedValue of allEdges) {
+      const [vertexA, vertexB] = JSON.parse(stringifiedValue) as Tuple<TValue>;
+
+      const containsVertexA = this.containsVertex(vertexA);
+      const containsVertexB = this.containsVertex(vertexB);
+
+      if (containsVertexA === false || containsVertexB === false) {
+        this.removeEdge(vertexA, vertexB);
+      }
+    }
   }
 }

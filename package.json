@@ -1,10 +1,11 @@
 {
-  "name": "CRDT",
+  "name": "crdt",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "test-coverage": "jest --coverage"
   },
   "keywords": [],
   "author": "",

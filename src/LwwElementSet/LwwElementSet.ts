@@ -30,30 +30,23 @@ export class LwwElementSet<T> implements ISet<T> {
   }
 
   merge(set: ISet<T>): void {
-    for (let [key, newValue] of set.added) {
-      const existingValue = this.#added.get(key);
+    this.#mergeValuesIntoMap(this.#added, set.added);
+    this.#mergeValuesIntoMap(this.#removed, set.removed);
+  }
+
+  #mergeValuesIntoMap(map: Map<T, Date>, newValues: Tuple<T, Date>[]) {
+    for (let [key, newValue] of newValues) {
+      const existingValue = map.get(key);
 
       if (existingValue === undefined) {
-        this.#added.set(key, newValue);
+        map.set(key, newValue);
         continue;
       }
 
+      //TODO: test that merge keeps latest
       const latestValue = existingValue >= newValue ? existingValue : newValue;
 
-      this.#added.set(key, latestValue);
-    }
-
-    for (let [key, newValue] of set.removed) {
-      const existingValue = this.#removed.get(key);
-
-      if (existingValue === undefined) {
-        this.#removed.set(key, newValue);
-        continue;
-      }
-
-      const latestValue = existingValue >= newValue ? existingValue : newValue;
-
-      this.#removed.set(key, latestValue);
+      map.set(key, latestValue);
     }
   }
 
@@ -76,7 +69,7 @@ export class LwwElementSet<T> implements ISet<T> {
       return true;
     }
 
-    return addedElement >= removedElement;
+    return addedElement > removedElement;
   }
 
   listAllElements(): T[] {
