@@ -1,4 +1,5 @@
-import { ISet, Tuple } from "src/interfaces";
+import { ISet } from "src/interfaces";
+import { Tuple } from "src/types";
 
 export class LwwElementSet<T> implements ISet<T> {
   #added: Map<T, Date>;

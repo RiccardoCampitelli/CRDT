@@ -4,9 +4,12 @@ import { LwwElementGraph } from "./LwwElementGraph";
 
 describe("Given an LwwElementGraph", () => {
   let graph: IGraph<number, LwwElementSet<number>>;
+  let now: Date;
 
   beforeEach(() => {
     jest.useFakeTimers();
+    now = new Date();
+
     graph = new LwwElementGraph<number>();
   });
 
@@ -55,7 +58,6 @@ describe("Given an LwwElementGraph", () => {
   describe("When removing an edge between two vertices", () => {
     const firstVertex = 1;
     const secondVertex = 2;
-    let now = new Date();
 
     beforeEach(() => {
       jest.setSystemTime(now);
@@ -96,7 +98,6 @@ describe("Given an LwwElementGraph", () => {
   describe("When removing a vertex from the graph", () => {
     const vertexToRemove = 1;
     const secondVertex = 2;
-    let now = new Date();
 
     beforeEach(() => {
       jest.setSystemTime(now);
@@ -238,7 +239,6 @@ describe("Given an LwwElementGraph", () => {
 
   describe("When merging with another graph", () => {
     const mergeGraph = new LwwElementGraph<number>();
-    const now = new Date();
 
     beforeEach(() => {
       jest.setSystemTime(now);

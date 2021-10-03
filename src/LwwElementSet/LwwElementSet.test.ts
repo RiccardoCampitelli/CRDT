@@ -1,14 +1,14 @@
-import { ISet, Tuple } from "src/interfaces";
+import { ISet } from "src/interfaces";
+import { Tuple } from "src/types";
 import { LwwElementSet } from "src/LwwElementSet";
 
 describe("Given an LwwElementSet", () => {
-  beforeAll(() => {
-    jest.useFakeTimers();
-  });
-
   let set: ISet<number>;
+  let now: Date;
 
   beforeEach(() => {
+    jest.useFakeTimers();
+    now = new Date();
     set = new LwwElementSet();
   });
 
@@ -17,8 +17,7 @@ describe("Given an LwwElementSet", () => {
     let addedTimestamp = 1632943954782;
 
     beforeEach(() => {
-      const now = new Date(addedTimestamp);
-      jest.setSystemTime(now);
+      jest.setSystemTime(new Date(addedTimestamp));
 
       set.add(addedValue);
     });
@@ -45,9 +44,7 @@ describe("Given an LwwElementSet", () => {
   describe("When an element has been removed", () => {
     const removedElement = 1;
 
-    let now: Date;
     beforeEach(() => {
-      now = new Date();
       jest.setSystemTime(now);
 
       set.add(removedElement);
@@ -70,71 +67,81 @@ describe("Given an LwwElementSet", () => {
 
   describe("When merging in with another set", () => {
     let secondarySet: ISet<number>;
-    let primarySet: ISet<number>;
-    // TODO: refactor to use default set rather than primarySet
 
-    // maybe use a times array t[]
+    const times: Date[] = [
+      new Date(1632943954782),
+      new Date(1632943954783),
+      new Date(1632943954784),
+      new Date(1632943954785),
+      new Date(1632943954786),
+      new Date(1632943954787),
+      new Date(1632943954788),
+      new Date(1632943954789),
+    ];
 
     beforeEach(() => {
-      const now = new Date();
       jest.setSystemTime(now);
 
-      const firstSet: Tuple<number, Date>[] = [
-        [1, new Date(1632943954782)],
-        [2, new Date(1632943954783)],
-        [3, new Date(1632943954784)],
+      const firstSetAddedValues: Tuple<number, Date>[] = [
+        [1, times[0]],
+        [2, times[1]],
+        [3, times[2]],
       ];
 
-      const secondSet: Tuple<number, Date>[] = [
-        [4, new Date(1632943954785)],
-        [5, new Date(1632943954786)],
-        [6, new Date(1632943954787)],
+      const firstSetDeletedValues: Tuple<number, Date>[] = [[2, times[6]]];
+
+      const secondSetAddedValues: Tuple<number, Date>[] = [
+        [4, times[3]],
+        [5, times[4]],
+        [6, times[5]],
       ];
 
-      primarySet = new LwwElementSet(firstSet, []);
-      secondarySet = new LwwElementSet(secondSet, []);
+      const secondSetDeletedValues: Tuple<number, Date>[] = [[5, times[7]]];
 
-      jest.setSystemTime(new Date(1632943954788));
-      primarySet.remove(2);
-      jest.setSystemTime(new Date(1632943954789));
-      secondarySet.remove(5);
+      set = new LwwElementSet(firstSetAddedValues, firstSetDeletedValues);
+      secondarySet = new LwwElementSet(
+        secondSetAddedValues,
+        secondSetDeletedValues
+      );
     });
 
     test("And there is a conflict Then the set is biased towards delete", () => {
       jest.setSystemTime(new Date(1632943954888));
-      primarySet.add(9);
+      set.add(9);
       secondarySet.remove(9);
 
-      primarySet.merge(secondarySet);
-      secondarySet.merge(primarySet);
+      set.merge(secondarySet);
+      secondarySet.merge(set);
 
-      expect(primarySet.listAllElements()).not.toContain(9);
+      expect(set.listAllElements()).not.toContain(9);
       expect(secondarySet.listAllElements()).not.toContain(9);
     });
 
     test("Then the set contains the correct elements", () => {
-      primarySet.merge(secondarySet);
+      set.merge(secondarySet);
 
-      expect(primarySet.listAllElements()).toIncludeAllMembers([1, 3, 4, 6]);
+      expect(set.listAllElements()).toIncludeAllMembers([1, 3, 4, 6]);
     });
 
     test("Then the set has merged all added values correctly", () => {
-      primarySet.merge(secondarySet);
+      set.merge(secondarySet);
 
-      expect(primarySet.added).toIncludeAllMembers([
-        [1, new Date(1632943954782)],
-        [3, new Date(1632943954784)],
-        [4, new Date(1632943954785)],
-        [6, new Date(1632943954787)],
+      expect(set.added).toIncludeSameMembers([
+        [1, times[0]],
+        [2, times[1]],
+        [3, times[2]],
+        [4, times[3]],
+        [5, times[4]],
+        [6, times[5]],
       ]);
     });
 
     test("Then the set has merged all removed values correctly", () => {
-      primarySet.merge(secondarySet);
+      set.merge(secondarySet);
 
-      expect(primarySet.removed).toIncludeAllMembers([
-        [2, new Date(1632943954788)],
-        [5, new Date(1632943954789)],
+      expect(set.removed).toIncludeSameMembers([
+        [2, times[6]],
+        [5, times[7]],
       ]);
     });
 
@@ -144,9 +151,9 @@ describe("Given an LwwElementSet", () => {
 
       secondarySet.add(2);
 
-      primarySet.merge(secondarySet);
+      set.merge(secondarySet);
 
-      expect(primarySet.added).toIncludeAllMembers([[2, new Date(latestTime)]]);
+      expect(set.added).toIncludeAllMembers([[2, new Date(latestTime)]]);
     });
   });
 });

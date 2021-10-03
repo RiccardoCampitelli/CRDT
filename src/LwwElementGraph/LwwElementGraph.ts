@@ -1,5 +1,6 @@
 import { LwwElementSet } from "src/LwwElementSet";
-import { ISet, IGraph, Tuple } from "src/interfaces";
+import { ISet, IGraph } from "src/interfaces";
+import { Tuple } from "src/types";
 
 export class LwwElementGraph<TValue> implements IGraph<TValue, ISet<TValue>> {
   vertices: LwwElementSet<TValue>;
@@ -134,7 +135,6 @@ export class LwwElementGraph<TValue> implements IGraph<TValue, ISet<TValue>> {
     }
   }
 
-  //TODO: test merging
   merge(graph: IGraph<TValue, ISet<TValue>>): void {
     this.vertices.merge(graph.vertices);
 

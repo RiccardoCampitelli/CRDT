@@ -1,4 +1,4 @@
-import { Tuple } from "src/interfaces";
+import { Tuple } from "src/types";
 
 export interface ISet<T> {
   added: Tuple<T, Date>[];

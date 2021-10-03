@@ -1,4 +1,4 @@
-import { ISet, Tuple } from "src/interfaces";
+import { ISet } from "src/interfaces";
 
 export interface IGraph<TValue, TSet extends ISet<TValue>> {
   edges: ISet<string>;
