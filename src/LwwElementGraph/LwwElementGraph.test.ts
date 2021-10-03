@@ -1,6 +1,7 @@
 import { LwwElementSet } from "src/LwwElementSet";
 import { IGraph } from "src/interfaces";
 import { LwwElementGraph } from "./LwwElementGraph";
+import { moveTimeForwards } from "src/utility";
 
 describe("Given an LwwElementGraph", () => {
   let graph: IGraph<number, LwwElementSet<number>>;
@@ -67,7 +68,7 @@ describe("Given an LwwElementGraph", () => {
       graph.addEdge(firstVertex, secondVertex);
       graph.addEdge(firstVertex, secondVertex);
 
-      jest.setSystemTime(now.setMinutes(now.getMinutes() + 1));
+      moveTimeForwards(now);
     });
 
     test("Then it should no longer be contained in the graph", () => {
@@ -104,7 +105,7 @@ describe("Given an LwwElementGraph", () => {
       graph.addVertex(vertexToRemove);
       graph.addVertex(secondVertex);
 
-      jest.setSystemTime(now.setMinutes(now.getMinutes() + 1));
+      moveTimeForwards(now);
     });
 
     test("Then containsVertex for the added vertex returns false", () => {
@@ -200,38 +201,35 @@ describe("Given an LwwElementGraph", () => {
     const startNode = 1;
     const endNode = 2;
 
-    const path1 = 3;
-    const path11 = 4;
-    const path2 = 5;
-    const path22 = 6;
-    const path222 = 7;
+    const firstPath = [3, 4];
+    const secondPath = [5, 6, 7];
 
     beforeEach(() => {
       graph.addVertex(startNode);
       graph.addVertex(endNode);
 
-      graph.addVertex(path2);
-      graph.addVertex(path22);
-      graph.addVertex(path222);
+      graph.addVertex(secondPath[0]);
+      graph.addVertex(secondPath[1]);
+      graph.addVertex(secondPath[2]);
 
-      graph.addEdge(startNode, path2);
-      graph.addEdge(path2, path22);
-      graph.addEdge(path22, path222);
-      graph.addEdge(path222, endNode);
+      graph.addEdge(startNode, secondPath[0]);
+      graph.addEdge(secondPath[0], secondPath[1]);
+      graph.addEdge(secondPath[1], secondPath[2]);
+      graph.addEdge(secondPath[2], endNode);
 
-      graph.addVertex(path1);
-      graph.addVertex(path11);
+      graph.addVertex(firstPath[0]);
+      graph.addVertex(firstPath[1]);
 
-      graph.addEdge(startNode, path1);
-      graph.addEdge(path1, path11);
-      graph.addEdge(path11, endNode);
+      graph.addEdge(startNode, firstPath[0]);
+      graph.addEdge(firstPath[0], firstPath[1]);
+      graph.addEdge(firstPath[1], endNode);
     });
 
     test("Then one of the paths is returned", () => {
       expect(graph.findPath(startNode, endNode)).toIncludeSameMembers([
         startNode,
-        path1,
-        path11,
+        firstPath[0],
+        firstPath[1],
         endNode,
       ]);
     });
@@ -240,32 +238,42 @@ describe("Given an LwwElementGraph", () => {
   describe("When merging with another graph", () => {
     const secondaryGraph = new LwwElementGraph<number>();
 
+    const primaryGraphVertices = [1, 2];
+    const secondaryGraphVertices = [2, 3];
+
     beforeEach(() => {
       jest.setSystemTime(now);
-      graph.addVertex(1);
-      secondaryGraph.addVertex(2);
+      graph.addVertex(primaryGraphVertices[0]);
+      graph.addVertex(primaryGraphVertices[1]);
 
-      graph.addVertex(2);
-      secondaryGraph.addVertex(3);
+      secondaryGraph.addVertex(secondaryGraphVertices[0]);
+      secondaryGraph.addVertex(secondaryGraphVertices[1]);
 
-      graph.addEdge(1, 2);
-      secondaryGraph.addEdge(2, 3);
+      graph.addEdge(primaryGraphVertices[0], primaryGraphVertices[1]);
+      secondaryGraph.addEdge(
+        secondaryGraphVertices[0],
+        secondaryGraphVertices[1]
+      );
 
-      jest.setSystemTime(now.setMinutes(now.getMinutes() + 1));
+      moveTimeForwards(now);
     });
 
     test("Then it should contain vertices from secondaryGraph", () => {
       graph.merge(secondaryGraph);
 
-      expect(graph.vertices.listAllElements()).toIncludeSameMembers([1, 2, 3]);
+      expect(graph.vertices.listAllElements()).toIncludeSameMembers([
+        primaryGraphVertices[0],
+        primaryGraphVertices[1],
+        secondaryGraphVertices[1],
+      ]);
     });
 
     test("Then it should contain edges from secondaryGraph", () => {
       graph.merge(secondaryGraph);
 
       expect(graph.edges.listAllElements()).toIncludeSameMembers([
-        JSON.stringify([1, 2]),
-        JSON.stringify([2, 3]),
+        JSON.stringify([primaryGraphVertices[0], primaryGraphVertices[1]]),
+        JSON.stringify([secondaryGraphVertices[0], secondaryGraphVertices[1]]),
       ]);
     });
 
@@ -274,7 +282,7 @@ describe("Given an LwwElementGraph", () => {
       graph.addVertex(4);
       graph.addVertex(5);
 
-      jest.setSystemTime(now.setMinutes(now.getMinutes() + 1));
+      moveTimeForwards(now);
 
       graph.addEdge(4, 5);
       secondaryGraph.removeVertex(5);
@@ -285,7 +293,6 @@ describe("Given an LwwElementGraph", () => {
       expect(graph.edges.listAllElements()).not.toContain(
         JSON.stringify([4, 5])
       );
-      expect(graph.queryConnectedVertices(5)).toBeEmpty();
     });
   });
 });

@@ -13,7 +13,7 @@ export class LwwElementGraph<TValue> implements IGraph<TValue, ISet<TValue>> {
 
   addEdge(vertexA: TValue, vertexB: TValue): void {
     if (vertexA === vertexB) {
-      console.log("vertexA must be different from vertexB");
+      console.warn("vertexA must be different from vertexB");
       return;
     }
 
@@ -33,46 +33,46 @@ export class LwwElementGraph<TValue> implements IGraph<TValue, ISet<TValue>> {
     }
   }
 
-  removeEdge(u: TValue, v: TValue): void {
-    this.edges.remove(JSON.stringify([u, v]));
+  removeEdge(vertexA: TValue, vertexB: TValue): void {
+    this.edges.remove(JSON.stringify([vertexA, vertexB]));
   }
 
-  addVertex(u: TValue): void {
-    this.vertices.add(u);
+  addVertex(vertex: TValue): void {
+    this.vertices.add(vertex);
   }
 
-  removeVertex(u: TValue): void {
+  removeVertex(vertex: TValue): void {
     let vertexExistsInEdge = false;
 
     for (const stringifiedValue of this.edges.listAllElements()) {
       const [vertexA, vertexB] = JSON.parse(stringifiedValue) as Tuple<TValue>;
 
-      if (vertexA === u || vertexB === u) {
+      if (vertexA === vertex || vertexB === vertex) {
         vertexExistsInEdge = true;
       }
     }
 
     if (vertexExistsInEdge) {
-      console.log("Cannot remove vertex because it is contained in edge");
+      console.warn("Cannot remove vertex because it is contained in edge");
       return;
     }
 
-    this.vertices.remove(u);
+    this.vertices.remove(vertex);
   }
 
-  containsVertex(u: TValue): boolean {
-    return this.vertices.contains(u);
+  containsVertex(vertex: TValue): boolean {
+    return this.vertices.contains(vertex);
   }
 
-  queryConnectedVertices(u: TValue): TValue[] {
+  queryConnectedVertices(vertex: TValue): TValue[] {
     const result: TValue[] = [];
 
     for (const stringifiedValue of this.edges.listAllElements()) {
       const [vertexA, vertexB] = JSON.parse(stringifiedValue) as Tuple<TValue>;
 
-      if (u === vertexA) result.push(vertexB);
+      if (vertex === vertexA) result.push(vertexB);
 
-      if (u === vertexB) result.push(vertexA);
+      if (vertex === vertexB) result.push(vertexA);
     }
 
     return result;
@@ -83,16 +83,12 @@ export class LwwElementGraph<TValue> implements IGraph<TValue, ISet<TValue>> {
 
     const pathResults: TValue[][] = [];
 
-    this.#pathHelper(from, to, visited, [], pathResults);
+    this.#pathFinderHelper(from, to, visited, [], pathResults);
 
-    const successfulPaths = pathResults.filter(
-      (path) => path[path.length - 1] === to
-    );
+    let shortestPath = pathResults[0];
 
-    let shortestPath = successfulPaths[0];
-
-    for (let i = 0; i < successfulPaths.length; i++) {
-      const currentPath = successfulPaths[i];
+    for (let i = 0; i < pathResults.length; i++) {
+      const currentPath = pathResults[i];
 
       if (currentPath.length < shortestPath.length) {
         shortestPath = currentPath;
@@ -100,13 +96,13 @@ export class LwwElementGraph<TValue> implements IGraph<TValue, ISet<TValue>> {
     }
 
     if (shortestPath === undefined) {
-      console.log(`Unable to find path between ${from} and ${to}`);
+      console.warn(`Unable to find path between ${from} and ${to}`);
     }
 
     return shortestPath;
   }
 
-  #pathHelper(
+  #pathFinderHelper(
     currentNode: TValue,
     targetNode: TValue,
     visited: Set<TValue>,
@@ -131,7 +127,7 @@ export class LwwElementGraph<TValue> implements IGraph<TValue, ISet<TValue>> {
     const allConnectedNodes = this.queryConnectedVertices(currentNode);
 
     for (const node of allConnectedNodes) {
-      this.#pathHelper(node, targetNode, visited, [...path], pathResults);
+      this.#pathFinderHelper(node, targetNode, visited, [...path], pathResults);
     }
   }
 

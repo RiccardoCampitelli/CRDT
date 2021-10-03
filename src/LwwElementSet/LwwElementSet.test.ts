@@ -1,6 +1,7 @@
 import { ISet } from "src/interfaces";
 import { Tuple } from "src/types";
 import { LwwElementSet } from "src/LwwElementSet";
+import { moveTimeForwards } from "src/utility";
 
 describe("Given an LwwElementSet", () => {
   let set: ISet<number>;
@@ -157,6 +158,3 @@ describe("Given an LwwElementSet", () => {
     });
   });
 });
-
-const moveTimeForwards = (now: Date) =>
-  jest.setSystemTime(now.setMinutes(now.getMinutes() + 1));
