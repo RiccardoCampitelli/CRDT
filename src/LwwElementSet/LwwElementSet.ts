@@ -44,8 +44,7 @@ export class LwwElementSet<T> implements ISet<T> {
         continue;
       }
 
-      //TODO: test that merge keeps latest
-      const latestValue = existingValue >= newValue ? existingValue : newValue;
+      const latestValue = existingValue > newValue ? existingValue : newValue;
 
       map.set(key, latestValue);
     }

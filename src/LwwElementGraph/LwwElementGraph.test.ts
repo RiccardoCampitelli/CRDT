@@ -31,19 +31,21 @@ describe("Given an LwwElementGraph", () => {
       ).toBeFalse();
     });
 
-    test("And the two vertices exist Then it should be contained in the edges", () => {
+    test("And the two vertices exist Then it should be contained in the edges set", () => {
       graph.addEdge(firstVertex, secondVertex);
 
-      expect(graph.edges.listAllElements()).toIncludeAllMembers([
-        JSON.stringify([firstVertex, secondVertex]),
-      ]);
+      expect(
+        graph.edges.contains(JSON.stringify([firstVertex, secondVertex]))
+      ).toBeTrue();
     });
 
-    test("And one of the two vertices does not exist Then it should not be contained in the edges", () => {
+    test("And one of the two vertices does not exist Then it should not be contained in the edges set", () => {
       const nonExistingVertex = 3;
       graph.addEdge(firstVertex, nonExistingVertex);
 
-      expect(graph.edges.listAllElements()).toBeEmpty();
+      expect(
+        graph.edges.contains(JSON.stringify([firstVertex, nonExistingVertex]))
+      ).toBeFalse();
     });
 
     test("And the edge already exists Then it is not added again", () => {
@@ -74,9 +76,9 @@ describe("Given an LwwElementGraph", () => {
     test("Then it should no longer be contained in the graph", () => {
       graph.removeEdge(firstVertex, secondVertex);
 
-      expect(graph.edges.listAllElements()).not.toIncludeAllMembers([
-        JSON.stringify([firstVertex, secondVertex]),
-      ]);
+      expect(
+        graph.edges.contains(JSON.stringify([firstVertex, secondVertex]))
+      ).toBeFalse();
     });
   });
 
@@ -85,10 +87,6 @@ describe("Given an LwwElementGraph", () => {
 
     beforeEach(() => {
       graph.addVertex(addedVertex);
-    });
-
-    test("Then it should be contained in the added set", () => {
-      expect(graph.vertices.listAllElements()).toContain(addedVertex);
     });
 
     test("Then containsVertex for the added vertex returns true", () => {
@@ -130,14 +128,17 @@ describe("Given an LwwElementGraph", () => {
     const centralVertex = 1;
     const firstVertex = 2;
     const secondVertex = 3;
+    const externalVertex = 5;
 
     beforeEach(() => {
       graph.addVertex(centralVertex);
       graph.addVertex(firstVertex);
       graph.addVertex(secondVertex);
+      graph.addVertex(externalVertex);
 
       graph.addEdge(centralVertex, firstVertex);
       graph.addEdge(centralVertex, secondVertex);
+      graph.addEdge(secondVertex, externalVertex);
     });
 
     test("Then querying connected vertices should return all connected vertices", () => {
@@ -179,17 +180,17 @@ describe("Given an LwwElementGraph", () => {
     const endNode = 2;
 
     const middleNode = 3;
-    const middleNode2 = 4;
+    const otherMiddleNode = 4;
 
     beforeEach(() => {
       graph.addVertex(startNode);
       graph.addVertex(endNode);
       graph.addVertex(middleNode);
-      graph.addVertex(middleNode2);
+      graph.addVertex(otherMiddleNode);
 
       graph.addEdge(startNode, middleNode);
 
-      graph.addEdge(middleNode2, endNode);
+      graph.addEdge(otherMiddleNode, endNode);
     });
 
     test("Then findPath should return undefined", () => {
@@ -197,7 +198,7 @@ describe("Given an LwwElementGraph", () => {
     });
   });
 
-  describe("When two paths exist between two nodes", () => {
+  describe("When multiple paths exist between two nodes", () => {
     const startNode = 1;
     const endNode = 2;
 
@@ -225,7 +226,7 @@ describe("Given an LwwElementGraph", () => {
       graph.addEdge(firstPath[1], endNode);
     });
 
-    test("Then one of the paths is returned", () => {
+    test("Then the shortest of the paths is returned", () => {
       expect(graph.findPath(startNode, endNode)).toIncludeSameMembers([
         startNode,
         firstPath[0],

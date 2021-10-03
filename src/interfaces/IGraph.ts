@@ -5,7 +5,6 @@ export interface IGraph<TValue, TSet extends ISet<TValue>> {
   vertices: TSet;
 
   /**
-   *
    * Will attempt to add an edge between the two vertices.
    *
    * If one of the vertices does not exist or the two vertices are the same
