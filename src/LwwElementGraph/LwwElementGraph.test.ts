@@ -38,7 +38,7 @@ describe("Given an LwwElementGraph", () => {
       ]);
     });
 
-    test("And one of the two vertices does not exist Then it should be contained in the edges", () => {
+    test("And one of the two vertices does not exist Then it should not be contained in the edges", () => {
       const nonExistingVertex = 3;
       graph.addEdge(firstVertex, nonExistingVertex);
 
@@ -164,7 +164,7 @@ describe("Given an LwwElementGraph", () => {
       graph.addEdge(centralVertex, endNode);
     });
 
-    test("Then findPath should return expected result", () => {
+    test("Then findPath should return a valid path", () => {
       expect(graph.findPath(startNode, endNode)).toIncludeSameMembers([
         startNode,
         centralVertex,
@@ -238,30 +238,30 @@ describe("Given an LwwElementGraph", () => {
   });
 
   describe("When merging with another graph", () => {
-    const mergeGraph = new LwwElementGraph<number>();
+    const secondaryGraph = new LwwElementGraph<number>();
 
     beforeEach(() => {
       jest.setSystemTime(now);
       graph.addVertex(1);
-      mergeGraph.addVertex(2);
+      secondaryGraph.addVertex(2);
 
       graph.addVertex(2);
-      mergeGraph.addVertex(3);
+      secondaryGraph.addVertex(3);
 
       graph.addEdge(1, 2);
-      mergeGraph.addEdge(2, 3);
+      secondaryGraph.addEdge(2, 3);
 
       jest.setSystemTime(now.setMinutes(now.getMinutes() + 1));
     });
 
-    test("Then it should contain vertices from mergeGraph", () => {
-      graph.merge(mergeGraph);
+    test("Then it should contain vertices from secondaryGraph", () => {
+      graph.merge(secondaryGraph);
 
       expect(graph.vertices.listAllElements()).toIncludeSameMembers([1, 2, 3]);
     });
 
-    test("Then it should contain edges from mergeGraph", () => {
-      graph.merge(mergeGraph);
+    test("Then it should contain edges from secondaryGraph", () => {
+      graph.merge(secondaryGraph);
 
       expect(graph.edges.listAllElements()).toIncludeSameMembers([
         JSON.stringify([1, 2]),
@@ -270,16 +270,16 @@ describe("Given an LwwElementGraph", () => {
     });
 
     test("And there is a concurrent addEdge and removeVertex Then vertex is removed and edge is not added", () => {
-      mergeGraph.addVertex(5);
+      secondaryGraph.addVertex(5);
       graph.addVertex(4);
       graph.addVertex(5);
 
       jest.setSystemTime(now.setMinutes(now.getMinutes() + 1));
 
       graph.addEdge(4, 5);
-      mergeGraph.removeVertex(5);
+      secondaryGraph.removeVertex(5);
 
-      graph.merge(mergeGraph);
+      graph.merge(secondaryGraph);
 
       expect(graph.vertices.listAllElements()).not.toContain(5);
       expect(graph.edges.listAllElements()).not.toContain(
